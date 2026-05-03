@@ -177,12 +177,12 @@ FontLib.loadFont("OCR-B", 96, 100, "AAEAAAAPAIAAAwBwRkZUTXxHn14AADmUAAAAHEdERUYA
   }
   /* National Rail logo circle */
   .nr-logo {
-    width: 40px; height: 40px;
+    width: 36px; height: 36px;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     overflow: hidden;
-    background: #f90;
+    background: transparent;
   }
   .tc-date {
     font-size: 1rem;
@@ -343,19 +343,19 @@ FontLib.loadFont("OCR-B", 96, 100, "AAEAAAAPAIAAAwBwRkZUTXxHn14AADmUAAAAHEdERUYA
   @media print {
     @page {
       margin: 0mm;
-      size: auto;
+      size: 100mm 160mm;
     }
     html, body {
       margin: 0 !important;
-      padding: 20px !important;
+      padding: 10px !important;
       background: #fff !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .form-panel, h1, .subtitle { display: none !important; }
-    .ticket-card { box-shadow: none; }
+    .form-panel, h1, .subtitle, .btn-print { display: none !important; }
+    .ticket-card { box-shadow: none; max-width: 100% !important; }
     .tc-notch { background: #fff; }
-    .container { justify-content: center; }
+    .container { justify-content: center; padding: 0 !important; }
   }
 </style>
 </head>
@@ -447,7 +447,7 @@ FontLib.loadFont("OCR-B", 96, 100, "AAEAAAAPAIAAAwBwRkZUTXxHn14AADmUAAAAHEdERUYA
     </div>
 
     <button class="btn btn-gen" onclick="generateTicket()">Generate Ticket</button>
-    <button class="btn btn-print" onclick="printClean()">Print / Save PDF</button>
+    <button class="btn btn-print" onclick="savePDF()">Download PDF</button>
 
   </div>
 
@@ -906,20 +906,25 @@ function addMonths(dateStr, n) {
 }
 
 // National Rail double arrow SVG (classic logo shape)
-const NR_LOGO_SVG = `<svg viewBox="0 0 205 205" xmlns="http://www.w3.org/2000/svg" style="width:26px;height:26px;">
-  <rect width="205" height="205" rx="102" fill="#f90"/>
-  <path d="M 30,52 L 120,52 L 120,28 L 175,70 L 120,112 L 120,88 L 30,88 Z" fill="white"/>
-  <path d="M 175,153 L 85,153 L 85,177 L 30,135 L 85,93 L 85,117 L 175,117 Z" fill="white"/>
+const NR_LOGO_SVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:36px;height:36px;">
+  <circle cx="100" cy="100" r="100" fill="#F4821A"/>
+  <!-- Top arrow: pointing right -->
+  <path d="M 28,72 L 108,72 L 108,52 L 158,80 L 108,108 L 108,88 L 28,88 Z" fill="white"/>
+  <!-- Bottom arrow: pointing left -->
+  <path d="M 172,112 L 92,112 L 92,92 L 42,120 L 92,148 L 92,128 L 172,128 Z" fill="white"/>
 </svg>`;
 
 // Grey arrow SVG
-const ARROW_SVG = `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M6 24 H38 M28 12 L42 24 L28 36" stroke="#888" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+const ARROW_SVG = `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 30 H46" stroke="#999" stroke-width="11" stroke-linecap="round"/>
+  <path d="M32 14 L50 30 L32 46" stroke="#999" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
-const RETURN_ARROW_SVG = `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M6 17 H34 M26 8 L38 17 L26 26" stroke="#888" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M42 31 H14 M22 22 L10 31 L22 40" stroke="#888" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+const RETURN_ARROW_SVG = `<svg viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 22 H46" stroke="#999" stroke-width="10" stroke-linecap="round"/>
+  <path d="M32 8 L50 22 L32 36" stroke="#999" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M54 48 H14" stroke="#999" stroke-width="10" stroke-linecap="round"/>
+  <path d="M28 34 L10 48 L28 62" stroke="#999" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
 function generateTicket() {
@@ -1048,11 +1053,24 @@ function generateTicket() {
   }
 }
 
-function printClean() {
+function savePDF() {
+  // Set title to desired filename
   const t = document.title;
-  document.title = '';
+  document.title = (document.getElementById('from-name').value || 'FROM') + '-' +
+                   (document.getElementById('to-name').value || 'TO') + '-ticket';
+  // Hide everything except the ticket
+  document.querySelector('.form-panel').style.display = 'none';
+  document.querySelector('h1') && (document.querySelector('h1').style.display = 'none');
+  document.querySelector('.subtitle') && (document.querySelector('.subtitle').style.display = 'none');
+  // Use browser print-to-PDF
   window.print();
-  document.title = t;
+  // Restore
+  setTimeout(() => {
+    document.querySelector('.form-panel').style.display = '';
+    document.querySelector('h1') && (document.querySelector('h1').style.display = '');
+    document.querySelector('.subtitle') && (document.querySelector('.subtitle').style.display = '');
+    document.title = t;
+  }, 1000);
 }
 
 window.onload = function() {
